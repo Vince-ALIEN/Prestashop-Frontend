@@ -1,22 +1,41 @@
 // src/components/ProductCard.tsx
+<<<<<<< Updated upstream
 import Link from "next/link";
 import ProductImage from "./ProductImage";
+=======
+"use client";
 
-interface ProductCardProps {
+import Link from "next/link";
+import { ProductImage } from "./ProductImage";
+>>>>>>> Stashed changes
+
+// Interface pour un produit PrestaShop
+interface PrestaShopProduct {
   id: number;
-  name: string;
+  name: string | Array<{ value: string }>;
+  link_rewrite: string | Array<{ value: string }>;
   price: string;
-  description_short: string;
-  link_rewrite: string | any[];
+  active: string | number | boolean;
+  associations?: {
+    images?: Array<any>;
+  };
 }
 
+interface ProductCardProps {
+  product: PrestaShopProduct;
+}
+
+// Fonction pour extraire la valeur dans la langue actuelle
 function getLanguageValue(field: any): string {
   if (!field) return "";
   if (typeof field === "string") return field;
-  if (Array.isArray(field)) return field[0]?.value || field[0] || "";
+  if (Array.isArray(field) && field.length > 0) {
+    return field[0]?.value || "";
+  }
   return "";
 }
 
+<<<<<<< Updated upstream
 export default function ProductCard({
   id,
   name,
@@ -75,6 +94,49 @@ export default function ProductCard({
             </button>
           </div>
         </div>
+=======
+// Fonction pour générer un slug
+function generateSlug(name: string): string {
+  return name
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/--+/g, "-")
+    .trim();
+}
+
+export function ProductCard({ product }: ProductCardProps) {
+  const name = getLanguageValue(product.name) || "Produit sans nom";
+  const slug = `${generateSlug(name)}-${product.id}`;
+  const imageName = getLanguageValue(product.link_rewrite) || "";
+  const price = product.price ? parseFloat(product.price).toFixed(2) : "0.00";
+  const isActive = product.active === "1" || product.active === 1 || product.active === true;
+
+  return (
+    <Link
+      href={`/products/${slug}`}
+      className="block bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300"
+    >
+      <div className="relative h-64 w-full bg-gray-100">
+        <ProductImage
+          productId={product.id}
+          imageName={imageName}
+          alt={name}
+          size="medium"
+          className="h-full w-full"
+        />
+      </div>
+      <div className="p-4">
+        <h2 className="text-lg font-semibold text-gray-900 mb-1 truncate">{name}</h2>
+        <p className="text-gray-700 font-medium">{price} €</p>
+        {!isActive && (
+          <span className="inline-block px-2 py-1 text-xs font-medium text-white bg-red-500 rounded-full mt-2">
+            Indisponible
+          </span>
+        )}
+>>>>>>> Stashed changes
       </div>
     </Link>
   );

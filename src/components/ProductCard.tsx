@@ -1,12 +1,18 @@
 // src/components/ProductCard.tsx
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 import Link from "next/link";
 import ProductImage from "./ProductImage";
 =======
+=======
+>>>>>>> Stashed changes
 "use client";
 
 import Link from "next/link";
 import { ProductImage } from "./ProductImage";
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 
 // Interface pour un produit PrestaShop
@@ -35,6 +41,7 @@ function getLanguageValue(field: any): string {
   return "";
 }
 
+<<<<<<< Updated upstream
 <<<<<<< Updated upstream
 export default function ProductCard({
   id,
@@ -115,6 +122,28 @@ export function ProductCard({ product }: ProductCardProps) {
   const isActive = product.active === "1" || product.active === 1 || product.active === true;
 
   return (
+=======
+// Fonction pour générer un slug
+function generateSlug(name: string): string {
+  return name
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/--+/g, "-")
+    .trim();
+}
+
+export function ProductCard({ product }: ProductCardProps) {
+  const name = getLanguageValue(product.name) || "Produit sans nom";
+  const slug = `${generateSlug(name)}-${product.id}`;
+  const imageName = getLanguageValue(product.link_rewrite) || "";
+  const price = product.price ? parseFloat(product.price).toFixed(2) : "0.00";
+  const isActive = product.active === "1" || product.active === 1 || product.active === true;
+
+  return (
+>>>>>>> Stashed changes
     <Link
       href={`/products/${slug}`}
       className="block bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300"
@@ -136,6 +165,9 @@ export function ProductCard({ product }: ProductCardProps) {
             Indisponible
           </span>
         )}
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
       </div>
     </Link>

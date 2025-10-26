@@ -1,5 +1,10 @@
 // src/components/ProductImage.tsx
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+=======
+"use client";
+
+>>>>>>> Stashed changes
 =======
 "use client";
 
@@ -15,6 +20,10 @@ interface ProductImageProps {
   className?: string;
   priority?: boolean;
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+=======
+  className?: string;
+>>>>>>> Stashed changes
 =======
   className?: string;
 >>>>>>> Stashed changes
@@ -29,6 +38,7 @@ export function ProductImage({
   priority = false,
 }: ProductImageProps) {
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
   // ✅ Construction de l'URL selon le format de ton PrestaShop
   const imageUrl = `https://nextps.panel-ufo.fr/${productId}-product_main/${imageName}.jpg`;
 
@@ -42,6 +52,8 @@ export function ProductImage({
   // ✅ Utilise la taille demandée ou "medium" par défaut
   const currentSize = imageSizes[size];
 =======
+=======
+>>>>>>> Stashed changes
   const [error, setError] = useState(false);
 
   // Mapper les tailles aux dimensions
@@ -66,6 +78,9 @@ export function ProductImage({
 
   // URL basée sur les logs
   const imageUrl = `https://nextps.panel-ufo.fr/${productId}-product_main_2x/${imageName}.jpg`;
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 
   return (
@@ -83,6 +98,9 @@ export function ProductImage({
       className={`object-cover ${className}`}
       priority={priority || size === "large"}
       onError={() => setError(true)}
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
       unoptimized={true}
     />

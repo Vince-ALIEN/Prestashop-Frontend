@@ -1,45 +1,44 @@
-// src/components/ProductImage.tsx
+// components/ProductImage.tsx
 import Image from "next/image";
 
 interface ProductImageProps {
-  productId: number;
-  imageName: string; // ✅ Nom du fichier image (ex: "hummingbird-printed-t-shirt")
+  productId: number | string;
+  imageName: string;
   alt: string;
-  size?: "small" | "medium" | "large"; // ✅ Optionnel : taille de l'image
-  className?: string;
+  size?: "small" | "medium" | "large";
   priority?: boolean;
+  className?: string; // Ajoutez cette ligne
 }
 
 export default function ProductImage({
   productId,
   imageName,
   alt,
-  size = "medium", // ✅ Taille par défaut
-  className = "",
+  size = "medium",
   priority = false,
+  className = "",
 }: ProductImageProps) {
-  // ✅ Construction de l'URL selon le format de ton PrestaShop
-  const imageUrl = `https://nextps.panel-ufo.fr/${productId}-product_main/${imageName}.jpg`;
-
-  // ✅ Tailles d'image
-  const imageSizes = {
-    small: { width: 200, height: 200 },
-    medium: { width: 450, height: 450 },
-    large: { width: 800, height: 800 },
+  // Déterminez les dimensions selon la taille
+  const dimensions = {
+    small: { width: 80, height: 80 },
+    medium: { width: 300, height: 300 },
+    large: { width: 600, height: 600 },
   };
 
-  // ✅ Utilise la taille demandée ou "medium" par défaut
-  const currentSize = imageSizes[size];
+  const { width, height } = dimensions[size];
+
+  // Construire l'URL de l'image
+  const imageUrl = `https://nextps.panel-ufo.fr/${productId}-product_main/${imageName}.jpg`;
 
   return (
     <Image
       src={imageUrl}
       alt={alt}
-      width={currentSize.width}
-      height={currentSize.height}
-      className={className}
-      priority={priority}
-      unoptimized={true}
+      width={width}
+      height={height}
+      className={`object-cover w-full h-full ${className}`}
+      priority={priority || size === "large"} // Priorité pour les grandes images
+      loading={priority || size === "large" ? "eager" : "lazy"} // Chargement eager pour les grandes images
     />
   );
 }

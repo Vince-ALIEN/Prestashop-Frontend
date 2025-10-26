@@ -1,6 +1,6 @@
 // src/components/layout/Header.tsx
 import Link from "next/link";
-import { ShoppingCart, User, Search, Globe } from "lucide-react";
+import { ShoppingBag, User, Search, Globe } from "lucide-react";
 
 export default function Header() {
   return (
@@ -8,8 +8,8 @@ export default function Header() {
       <div className="container mx-auto px-4 py-3 flex items-center justify-between">
         {/* Logo */}
         <div className="flex-shrink-0">
-          <Link href="/" className="text-2xl font-bold text-gray-800">
-            Mon<span className="text-blue-600">Shop</span>
+          <Link href="/" className="text-2xl font-extrabold text-gray-800">
+            Mon<span className="text-blue-600 font-light">Shop</span>
           </Link>
         </div>
 
@@ -62,7 +62,7 @@ export default function Header() {
           </div>
 
           {/* Icônes utilisateur */}
-          <div className="flex space-x-4">
+          <div className="flex space-x-1">
             {/* Compte utilisateur */}
             <button className="p-2 text-gray-700 hover:text-blue-600 transition-colors">
               <User className="h-6 w-6" />
@@ -75,9 +75,9 @@ export default function Header() {
 
             {/* Panier */}
             <button className="p-2 text-gray-700 hover:text-blue-600 transition-colors relative">
-              <ShoppingCart className="h-6 w-6" />
+              <ShoppingBag className="h-6 w-6" />
               {/* Badge pour le nombre d'articles (exemple statique) */}
-              <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+              <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
                 0
               </span>
             </button>

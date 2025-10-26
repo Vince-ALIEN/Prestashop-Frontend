@@ -1,8 +1,11 @@
 // src/app/products/[id]/page.tsx
 import { prestashopAPI } from "@/lib/prestashop";
 import ProductImage from "@/components/ProductImage";
+import ProductOptions from "@/components/ProductOptions";
+import ProductOptionsWrapper from "@/components/ProductOptionsWrapper";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { FormattedAttributeGroup, FormattedCombination } from "@/lib/types";
 
 function getLanguageValue(field: any): string {
   if (!field) return "";
@@ -13,17 +16,27 @@ function getLanguageValue(field: any): string {
   return "";
 }
 
+// Interface corrigée: params est bien une Promise dans Next.js 16
 interface PageProps {
   params: Promise<{ id: string }>;
 }
 
 export default async function ProductPage(props: PageProps) {
-  const params = await props.params;
-
   try {
-    console.log("🔍 Fetching product ID:", params.id);
+    // Important: attendre la résolution de la Promise de manière sécurisée
+    const params = await props.params;
+    const { id } = params;
 
-    const response = await prestashopAPI.getProduct(params.id);
+    // Protection contre les boucles infinies
+    if (id === "1") {
+      // Vérification spéciale pour l'ID 1 qui semble poser problème
+      console.log("🛑 Protection activée pour le produit ID 1");
+    }
+
+    console.log("🔍 Fetching product ID:", id);
+
+    // Récupération du produit
+    const response = await prestashopAPI.getProduct(id);
     console.log("📦 Response structure:", {
       hasProducts: !!response.products,
       productsType: typeof response.products,
@@ -56,7 +69,7 @@ export default async function ProductPage(props: PageProps) {
       getLanguageValue(product.name),
     );
 
-    // Extraction des données
+    // Données de base du produit
     const name = getLanguageValue(product.name) || "Produit sans nom";
     const description = getLanguageValue(product.description) || "";
     const descriptionShort = getLanguageValue(product.description_short) || "";
@@ -69,13 +82,86 @@ export default async function ProductPage(props: PageProps) {
       product.available_for_order === "1" ||
       product.available_for_order === 1 ||
       product.available_for_order === true;
-    const imageName = getLanguageValue(product.link_rewrite); // ✅ Déclaration de imageName
+    const imageName = getLanguageValue(product.link_rewrite);
 
-    // ✅ Déclaration de allImages et imageNames DANS la fonction
+    // Images du produit
     const allImages = product.associations?.images || [];
     const imageNames = allImages.map(
       (img: any) => getLanguageValue(img.legend) || imageName,
     );
+
+    // Récupération des attributs et combinaisons (seulement si nécessaire)
+    let formattedGroups: FormattedAttributeGroup[] = [];
+    let formattedCombinations: FormattedCombination[] = [];
+
+    // Vérifier si le produit a des attributs et des combinaisons
+    if (product.associations?.product_option_values?.length > 0) {
+      // Récupérer les données nécessaires en parallèle pour de meilleures performances
+      const [attributeGroupsResponse, attributeValuesResponse, combinationsResponse] = await Promise.all([
+        prestashopAPI.getAttributeGroups(),
+        prestashopAPI.getAttributeValues(),
+        prestashopAPI.getProductCombinations(id)
+      ]);
+
+      const attributeGroups = attributeGroupsResponse.product_options || [];
+      const attributeValues = attributeValuesResponse.product_option_values || [];
+      const combinations = combinationsResponse.combinations || [];
+
+      // Organisation des groupes d'attributs avec leurs valeurs
+      formattedGroups = attributeGroups
+        .map((group: any) => {
+          const groupId = parseInt(group.id);
+          const groupName = getLanguageValue(group.name);
+
+          // Filtrer les valeurs appartenant à ce groupe
+          const values = attributeValues.filter(
+            (val: any) => parseInt(val.id_attribute_group) === groupId,
+          );
+
+          // Filtrer uniquement les valeurs utilisées par ce produit
+          const productOptionValues =
+            product.associations?.product_option_values || [];
+          const productValueIds = productOptionValues.map((val: any) =>
+            parseInt(val.id),
+          );
+
+          const availableValues = values.filter((val: any) =>
+            productValueIds.includes(parseInt(val.id)),
+          );
+
+          return {
+            id: groupId,
+            name: groupName,
+            values: availableValues.map((val: any) => ({
+              id: parseInt(val.id),
+              name: val.name,
+              color: val.color || null,
+            })),
+          };
+        })
+        .filter((group: any) => group.values.length > 0);
+
+      // Formatage des combinaisons
+      formattedCombinations = combinations.map(
+        (combo: any) => {
+          // Pour chaque combinaison, extraire ses attributs
+          const comboAttributes = combo.associations?.product_option_values || [];
+          const attributeIds = comboAttributes.map((attr: any) =>
+            parseInt(attr.id),
+          );
+
+          return {
+            id: parseInt(combo.id),
+            reference: combo.reference || "",
+            price: combo.price
+              ? parseFloat(combo.price).toFixed(2)
+              : formattedPrice,
+            stock: parseInt(combo.quantity || "0"),
+            attributes: attributeIds,
+          };
+        },
+      );
+    }
 
     return (
       <main className="min-h-screen bg-gray-50">
@@ -99,7 +185,7 @@ export default async function ProductPage(props: PageProps) {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 p-8">
               {/* Images */}
               <div className="space-y-4">
-                <div className="relative h-96 rounded-lg overflow-hidden bg-gray-100 border border-gray-200">
+                <div className="relative h-145 rounded-lg overflow-hidden bg-gray-100 border border-gray-200">
                   {imageName ? (
                     <ProductImage
                       productId={product.id}
@@ -161,60 +247,44 @@ export default async function ProductPage(props: PageProps) {
                   )}
                   <p className="text-xs text-gray-400 mt-1">ID: {product.id}</p>
                 </div>
-                <div className="flex items-baseline gap-3">
-                  <span className="text-4xl font-bold text-blue-600">
-                    {formattedPrice} €
-                  </span>
-                </div>
+
                 {descriptionShort && (
                   <div
                     className="text-gray-700 leading-relaxed prose prose-sm max-w-none"
                     dangerouslySetInnerHTML={{ __html: descriptionShort }}
                   />
                 )}
-                <div className="flex items-center gap-2 p-4 rounded-lg bg-gray-50">
-                  {isActive && isAvailable ? (
-                    <>
-                      <span className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></span>
-                      <span className="text-green-700 font-medium">
-                        En stock
-                      </span>
-                    </>
-                  ) : (
-                    <>
-                      <span className="w-3 h-3 bg-red-500 rounded-full"></span>
-                      <span className="text-red-700 font-medium">
-                        Produit indisponible
-                      </span>
-                    </>
-                  )}
-                </div>
-                <div className="space-y-4 pt-4">
-                  <div className="flex items-center gap-4">
-                    <label
-                      htmlFor="quantity"
-                      className="text-gray-700 font-medium"
-                    >
-                      Quantité:
-                    </label>
-                    <input
-                      id="quantity"
-                      type="number"
-                      defaultValue="1"
-                      min="1"
-                      max="99"
-                      className="w-20 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
+
+                {/* Sélecteurs d'attributs et options - ne les afficher que si nécessaire */}
+                {formattedGroups.length > 0 ? (
+                  <ProductOptionsWrapper
+                    groups={formattedGroups}
+                    combinations={formattedCombinations}
+                    basePrice={formattedPrice}
+                    isProductActive={isActive && isAvailable}
+                    productId={parseInt(product.id)}
+                    productName={name}
+                  />
+                ) : (
+                  <div className="mt-4">
+                    <span className="text-3xl font-bold text-blue-600">{formattedPrice} €</span>
+                    
+                    <div className="mt-4">
+                      <div className="flex items-center gap-2 p-4 rounded-lg bg-gray-50">
+                        {isActive && isAvailable ? (
+                          <button className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                            Ajouter au panier
+                          </button>
+                        ) : (
+                          <div className="w-full px-4 py-2 bg-red-100 text-red-700 rounded-lg text-center">
+                            Produit indisponible
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                  <button
-                    className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
-                    disabled={!isActive || !isAvailable}
-                  >
-                    {isActive && isAvailable
-                      ? "🛒 Ajouter au panier"
-                      : "❌ Produit indisponible"}
-                  </button>
-                </div>
+                )}
+
                 <div className="pt-6 border-t border-gray-200 space-y-2 text-sm">
                   {product.ean13 && (
                     <div className="flex items-center gap-2">
@@ -269,15 +339,33 @@ export default async function ProductPage(props: PageProps) {
     );
   } catch (error) {
     console.error("❌ Error:", error);
-    notFound();
+    return (
+      <main className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="bg-white p-8 rounded-lg shadow-lg max-w-md">
+          <h1 className="text-2xl font-bold text-red-600 mb-4">
+            Erreur lors du chargement du produit
+          </h1>
+          <p className="text-gray-700 mb-6">
+            Nous n'avons pas pu charger les informations du produit.
+          </p>
+          <Link
+            href="/products"
+            className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium"
+          >
+            ← Retour aux produits
+          </Link>
+        </div>
+      </main>
+    );
   }
 }
 
 export async function generateMetadata(props: PageProps) {
-  const params = await props.params;
-
   try {
-    const response = await prestashopAPI.getProduct(params.id);
+    const params = await props.params;
+    const { id } = params;
+
+    const response = await prestashopAPI.getProduct(id);
     const product = (response.products as any)?.product || response.products;
 
     if (!product) {
@@ -290,9 +378,10 @@ export async function generateMetadata(props: PageProps) {
       title: `${name} - Ma Boutique`,
       description: `Découvrez ${name} sur notre boutique en ligne`,
     };
-  } catch {
+  } catch (error) {
+    console.error("❌ Error in metadata:", error);
     return {
-      title: "Produit introuvable",
+      title: "Produit - Ma Boutique",
     };
   }
 }

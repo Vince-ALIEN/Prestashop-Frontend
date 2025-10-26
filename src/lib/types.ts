@@ -1,5 +1,4 @@
 // src/lib/types.ts
-
 export interface Product {
   id: number;
   id_manufacturer: number;
@@ -51,7 +50,6 @@ export interface Product {
   pack_stock_type: string;
   state: string;
   product_type: string;
-  
   name: string | LanguageField[];
   description: string | LanguageField[];
   description_short: string | LanguageField[];
@@ -63,7 +61,6 @@ export interface Product {
   available_later: string | LanguageField[];
   delivery_in_stock: string | LanguageField[];
   delivery_out_stock: string | LanguageField[];
-  
   associations?: {
     categories?: Array<{ id: string }>;
     images?: Array<{ id: string }>;
@@ -83,13 +80,12 @@ export interface LanguageField {
 }
 
 export interface PrestaShopProductResponse {
-  products: Product | { product: Product }; 
+  products: Product | { product: Product };
 }
 
 export interface PrestaShopProductsResponse {
   products: Product[] | { [key: string]: Product };
 }
-
 
 export interface Category {
   id: number;
@@ -119,4 +115,80 @@ export interface PrestaShopCategoryResponse {
 
 export interface PrestaShopCategoriesResponse {
   categories: Category[] | { [key: string]: Category };
+}
+
+// Interfaces améliorées pour les attributs et combinaisons
+export interface AttributeGroup {
+  id: string | number;
+  is_color_group: string;
+  group_type: string;
+  position: string;
+  name: string | LanguageField[];
+  public_name: string | LanguageField[];
+  associations?: {
+    product_option_values?: Array<{ id: string }>;
+  };
+}
+
+export interface AttributeValue {
+  id: string | number;
+  id_attribute_group: string | number;
+  color: string;
+  position: string | number;
+  name: string | LanguageField[];
+}
+
+export interface Combination {
+  id: string | number;
+  id_product: string | number;
+  reference: string;
+  supplier_reference: string;
+  ean13: string;
+  upc: string;
+  wholesale_price: string;
+  price: string;
+  ecotax: string;
+  quantity: string | number;
+  weight: string;
+  unit_price_impact: string;
+  minimal_quantity: string | number;
+  default_on: string;
+  available_date: string;
+  associations: {
+    product_option_values: Array<{ id: string | number }>;
+    images?: Array<{ id: string | number }>;
+  };
+}
+
+export interface PrestaShopAttributeGroupsResponse {
+  product_options: AttributeGroup[] | { [key: string]: AttributeGroup };
+}
+
+export interface PrestaShopAttributeValuesResponse {
+  product_option_values: AttributeValue[] | { [key: string]: AttributeValue };
+}
+
+export interface PrestaShopCombinationsResponse {
+  combinations: Combination[] | { [key: string]: Combination };
+}
+
+// Interfaces pour les données formatées côté client
+export interface FormattedAttributeValue {
+  id: number;
+  name: string;
+  color: string | null;
+}
+
+export interface FormattedAttributeGroup {
+  id: number;
+  name: string;
+  values: FormattedAttributeValue[];
+}
+
+export interface FormattedCombination {
+  id: number;
+  reference: string;
+  price: string;
+  stock: number;
+  attributes: number[];
 }
